@@ -1,0 +1,604 @@
+openapi: 3.1.0
+info:
+  title: SailServer API
+  description: |
+    REST API for the SailServer boat tracking platform.
+    All endpoints use a single URL with a JSON POST body.
+    Authentication is via an `apikey` field in every request body.
+
+    **Base URL:** `https://app.sailserver.com/mod/api.php`
+
+    All requests must set `Content-Type: application/json`.
+  version: "1.0"
+  contact:
+    url: https://app.sailserver.com
+
+servers:
+  - url: https://app.sailserver.com/mod/api.php
+    description: Production
+
+paths:
+  /:
+    post:
+      summary: SailServer API endpoint
+      description: |
+        All commands are dispatched through this single endpoint.
+        The `cmd` field in the request body determines which operation is performed.
+
+        | `cmd`         | Description                                      |
+        |---------------|--------------------------------------------------|
+        | `getboat`     | Current boat position, instruments, and weather  |
+        | `gettracks`   | List of all recorded tracks with statistics      |
+        | `getlasttrack`| GPS data points for the most recent track        |
+        | `gettrack`    | GPS data points for a specific track by ID       |
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Request"
+            examples:
+              getboat:
+                summary: Get current boat data
+                value:
+                  apikey: "your-api-key"
+                  cmd: "getboat"
+                  trackid: ""
+              gettracks:
+                summary: Get all tracks
+                value:
+                  apikey: "your-api-key"
+                  cmd: "gettracks"
+                  trackid: ""
+              getlasttrack:
+                summary: Get last track data points
+                value:
+                  apikey: "your-api-key"
+                  cmd: "getlasttrack"
+                  trackid: ""
+              gettrack:
+                summary: Get a specific track by ID
+                value:
+                  apikey: "your-api-key"
+                  cmd: "gettrack"
+                  trackid: "241819"
+
+      responses:
+        "200":
+          description: Successful response. The shape of `data` depends on the `cmd` used.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/GetBoatResponse"
+                  - $ref: "#/components/schemas/GetTracksResponse"
+                  - $ref: "#/components/schemas/GetLastTrackResponse"
+                  - $ref: "#/components/schemas/GetTrackResponse"
+              examples:
+                getboat:
+                  summary: getboat response
+                  value:
+                    statuscode: 200
+                    cmd: "getboat"
+                    message: ""
+                    data:
+                      boatname: "Cyber Masu"
+                      inst:
+                        tim: 1777205084
+                        utc: "2026-04-26 12:04:44"
+                        lat: 54.71078275
+                        lon: 11.10644101
+                        sog: 0
+                        cog: 233.6
+                        v: 14.5
+                        stw: 0
+                        crs: 0
+                        stwmax: 0
+                        wda: 1.2
+                        watmp: 0
+                      weather:
+                        tz: 7200
+                        dt: 1777978800
+                        reqtime: "2026-05-05 00:00:00"
+                        temp: 285.64
+                        wind_speed: 6.17
+                        wind_deg: 303
+                        uvi: 4.21
+                        clouds: 7
+                        weather:
+                          id: 800
+                          main: "Clear"
+                          description: "clear sky"
+                          icon: "01d"
+                gettracks:
+                  summary: gettracks response (first item)
+                  value:
+                    statuscode: 200
+                    cmd: "gettracks"
+                    message: ""
+                    data:
+                      - trackid: 211809
+                        start:
+                          time: "2026-04-26 13:10"
+                          lat: 54.106119
+                          lon: 11.141845
+                        stop:
+                          time: "2026-04-26 14:02"
+                          lat: 54.71028955
+                          lon: 11.11624724
+                        rep:
+                          totdist: 3.837
+                          tottime: 3088
+                          avespd: 4.47
+                          maxspd: 19.979
+                          max10spd: 6.504
+                          max1hspd: 0
+                          engsec: 0
+                          engfuel: 0
+                          eng1sec: 0
+                          eng1fuel: 0
+                          enghour: 0
+                          eng1hour: 0
+                getlasttrack:
+                  summary: getlasttrack response
+                  value:
+                    statuscode: 200
+                    cmd: "getlasttrack"
+                    message: ""
+                    data:
+                      timestart: "2026-04-26 11:09:00"
+                      timestop: "2026-04-26 12:02:00"
+                      moving: 0
+                      data:
+                        - tim: 1777201832
+                          utc: "2026-04-26 11:10:32"
+                          lat: 54.106119
+                          lon: 11.141845
+                          sog: 2.96
+                          cog: 270
+                          i: 0
+                gettrack:
+                  summary: gettrack response
+                  value:
+                    statuscode: 200
+                    cmd: "gettrack"
+                    message: ""
+                    data:
+                      - utc: "2014-07-05 12:35:49"
+                        tim: 1404556549
+                        lat: 56.9198357
+                        lon: 11.2432198
+                        cog: 0
+                        sog: 0
+                        i: 0
+
+components:
+  schemas:
+    # ── Request ──────────────────────────────────────────────────────────────
+    Request:
+      type: object
+      required:
+        - apikey
+        - cmd
+      properties:
+        apikey:
+          type: string
+          description: Your SailServer API key.
+          example: "your-api-key"
+        cmd:
+          type: string
+          description: The command to execute.
+          enum:
+            - getboat
+            - gettracks
+            - getlasttrack
+            - gettrack
+        trackid:
+          type: string
+          description: |
+            Required for `gettrack`. The numeric track ID as a string.
+            Leave empty (`""`) for all other commands.
+          example: "211809"
+
+    # ── Shared envelope ──────────────────────────────────────────────────────
+    BaseResponse:
+      type: object
+      required:
+        - statuscode
+        - cmd
+        - message
+      properties:
+        statuscode:
+          type: integer
+          description: HTTP-style status code. `200` indicates success.
+          example: 200
+        cmd:
+          type: string
+          description: Echoes the command that was executed.
+          example: "getboat"
+        message:
+          type: string
+          description: Error message when `statuscode` is not 200, otherwise empty.
+          example: ""
+
+    # ── TrackPoint (shared by gettrack and getlasttrack) ─────────────────────
+    TrackPoint:
+      type: object
+      description: A single GPS position fix recorded during a track.
+      required:
+        - tim
+        - utc
+        - lat
+        - lon
+        - sog
+        - cog
+        - i
+      properties:
+        tim:
+          type: integer
+          format: int64
+          description: Unix timestamp (seconds since epoch).
+          example: 1777201832
+        utc:
+          type: string
+          description: UTC datetime string (`YYYY-MM-DD HH:MM:SS`).
+          example: "2026-04-26 11:10:32"
+        lat:
+          type: number
+          format: double
+          description: Latitude in decimal degrees (WGS-84).
+          example: 56.116119
+        lon:
+          type: number
+          format: double
+          description: Longitude in decimal degrees (WGS-84).
+          example: 11.148845
+        sog:
+          type: number
+          format: float
+          description: Speed over ground in knots.
+          example: 2.96
+        cog:
+          type: number
+          format: float
+          description: Course over ground in degrees (0-360).
+          example: 270.0
+        i:
+          type: integer
+          description: Zero-based index of this point within the track.
+          example: 0
+
+    # ── getboat ──────────────────────────────────────────────────────────────
+    GetBoatResponse:
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/BoatData"
+
+    BoatData:
+      type: object
+      description: Current boat state including instruments and weather.
+      required:
+        - boatname
+        - inst
+        - weather
+      properties:
+        boatname:
+          type: string
+          description: The name of the boat.
+          example: "Cyber Masu"
+        inst:
+          $ref: "#/components/schemas/Instruments"
+        weather:
+          $ref: "#/components/schemas/Weather"
+
+    Instruments:
+      type: object
+      description: Latest sensor readings from the boat's instruments.
+      required:
+        - tim
+        - utc
+        - lat
+        - lon
+        - sog
+        - cog
+      properties:
+        tim:
+          type: integer
+          format: int64
+          description: Unix timestamp of the reading.
+          example: 1777205084
+        utc:
+          type: string
+          description: UTC datetime of the reading (`YYYY-MM-DD HH:MM:SS`).
+          example: "2026-04-26 12:04:44"
+        lat:
+          type: number
+          format: double
+          description: Latitude in decimal degrees.
+          example: 51.71222475
+        lon:
+          type: number
+          format: double
+          description: Longitude in decimal degrees.
+          example: 11.10624101
+        sog:
+          type: number
+          format: float
+          description: Speed over ground in knots.
+          example: 0.0
+        cog:
+          type: number
+          format: float
+          description: Course over ground in degrees.
+          example: 233.6
+        v:
+          type: number
+          format: float
+          description: Battery/system voltage in volts.
+          example: 14.5
+        stw:
+          type: number
+          format: float
+          description: Speed through water in knots.
+          example: 0.0
+        crs:
+          type: number
+          format: float
+          description: Compass course (heading) in degrees.
+          example: 0.0
+        stwmax:
+          type: number
+          format: float
+          description: Maximum speed through water recorded in knots.
+          example: 0.0
+        wda:
+          type: number
+          format: float
+          description: Apparent wind direction angle in degrees.
+          example: 1.2
+        watmp:
+          type: number
+          format: float
+          description: Water temperature in degrees Celsius.
+          example: 0.0
+
+    Weather:
+      type: object
+      description: Current weather forecast at the boat's position (via OpenWeatherMap).
+      required:
+        - temp
+        - wind_speed
+        - wind_deg
+        - weather
+      properties:
+        tz:
+          type: integer
+          description: Timezone offset from UTC in seconds.
+          example: 7200
+        dt:
+          type: integer
+          format: int64
+          description: Unix timestamp of the forecast.
+          example: 1777978800
+        reqtime:
+          type: string
+          description: UTC datetime the weather was requested.
+          example: "2026-05-05 00:00:00"
+        temp:
+          type: number
+          format: float
+          description: Temperature in Kelvin. Convert to Celsius with `K - 273.15`.
+          example: 285.64
+        wind_speed:
+          type: number
+          format: float
+          description: Wind speed in metres per second.
+          example: 6.17
+        wind_deg:
+          type: integer
+          description: Wind direction in degrees (meteorological, 0 = from North).
+          example: 303
+        uvi:
+          type: number
+          format: float
+          description: UV index.
+          example: 4.21
+        clouds:
+          type: integer
+          description: Cloud coverage percentage (0-100).
+          example: 7
+        weather:
+          $ref: "#/components/schemas/WeatherCondition"
+
+    WeatherCondition:
+      type: object
+      description: OpenWeatherMap weather condition descriptor.
+      properties:
+        id:
+          type: integer
+          description: OWM condition ID.
+          example: 800
+        main:
+          type: string
+          description: Short condition group (e.g. "Clear", "Rain").
+          example: "Clear"
+        description:
+          type: string
+          description: Detailed condition description.
+          example: "clear sky"
+        icon:
+          type: string
+          description: |
+            OWM icon code. Use as:
+            `https://openweathermap.org/img/wn/{icon}@2x.png`
+          example: "01d"
+
+    # ── gettracks ────────────────────────────────────────────────────────────
+    GetTracksResponse:
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              description: All recorded tracks, newest first.
+              items:
+                $ref: "#/components/schemas/TrackSummary"
+
+    TrackSummary:
+      type: object
+      description: Summary and statistics for a single recorded track.
+      required:
+        - trackid
+        - start
+        - stop
+        - rep
+      properties:
+        trackid:
+          type: integer
+          description: Unique numeric track identifier.
+          example: 242819
+        start:
+          $ref: "#/components/schemas/TrackEndpoint"
+        stop:
+          $ref: "#/components/schemas/TrackEndpoint"
+        rep:
+          $ref: "#/components/schemas/TrackReport"
+
+    TrackEndpoint:
+      type: object
+      description: Position and time at one end of a track.
+      required:
+        - time
+        - lat
+        - lon
+      properties:
+        time:
+          type: string
+          description: Local time string (`YYYY-MM-DD HH:MM`).
+          example: "2026-04-26 13:10"
+        lat:
+          type: number
+          format: double
+          description: Latitude in decimal degrees.
+          example: 46.406119
+        lon:
+          type: number
+          format: double
+          description: Longitude in decimal degrees.
+          example: 11.148245
+
+    TrackReport:
+      type: object
+      description: Computed statistics for a track.
+      properties:
+        totdist:
+          type: number
+          format: float
+          description: Total distance in nautical miles.
+          example: 3.837
+        tottime:
+          type: integer
+          description: Total elapsed time in seconds.
+          example: 3088
+        avespd:
+          type: number
+          format: float
+          description: Average speed in knots.
+          example: 4.47
+        maxspd:
+          type: number
+          format: float
+          description: Maximum instantaneous speed in knots.
+          example: 19.979
+        max10spd:
+          type: number
+          format: float
+          description: Maximum 10-second average speed in knots.
+          example: 6.504
+        max1hspd:
+          type: number
+          format: float
+          description: Maximum 1-hour average speed in knots.
+          example: 0.0
+        engsec:
+          type: integer
+          description: Engine 1 run time in seconds.
+          example: 0
+        engfuel:
+          type: number
+          format: float
+          description: Engine 1 fuel consumption in litres.
+          example: 0.0
+        eng1sec:
+          type: integer
+          description: Engine 2 run time in seconds.
+          example: 0
+        eng1fuel:
+          type: number
+          format: float
+          description: Engine 2 fuel consumption in litres.
+          example: 0.0
+        enghour:
+          type: number
+          format: float
+          description: Engine 1 total hours.
+          example: 0.0
+        eng1hour:
+          type: number
+          format: float
+          description: Engine 2 total hours.
+          example: 0.0
+
+    # ── getlasttrack ─────────────────────────────────────────────────────────
+    GetLastTrackResponse:
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/LastTrackData"
+
+    LastTrackData:
+      type: object
+      description: Metadata and GPS points for the most recently recorded track.
+      required:
+        - timestart
+        - timestop
+        - moving
+        - data
+      properties:
+        timestart:
+          type: string
+          description: Track start time in UTC (`YYYY-MM-DD HH:MM:SS`).
+          example: "2026-04-26 11:09:00"
+        timestop:
+          type: string
+          description: Track stop time in UTC (`YYYY-MM-DD HH:MM:SS`).
+          example: "2026-04-26 12:02:00"
+        moving:
+          type: integer
+          description: Whether the boat is currently moving. `1` = moving, `0` = stopped.
+          enum: [0, 1]
+          example: 0
+        data:
+          type: array
+          description: Ordered list of GPS track points.
+          items:
+            $ref: "#/components/schemas/TrackPoint"
+
+    # ── gettrack ─────────────────────────────────────────────────────────────
+    GetTrackResponse:
+      allOf:
+        - $ref: "#/components/schemas/BaseResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              description: Ordered list of GPS track points for the requested track.
+              items:
+                $ref: "#/components/schemas/TrackPoint"
