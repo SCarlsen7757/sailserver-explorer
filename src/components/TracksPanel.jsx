@@ -5,9 +5,23 @@ import MapView from './MapView';
 import { getTrack } from '../services/api';
 
 function formatDuration(seconds) {
+  if (seconds == null) return '—';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// All rep stats are optional per the API spec — show a dash when missing
+function fmtNum(value, digits, suffix = '') {
+  return value != null ? `${value.toFixed(digits)}${suffix}` : '—';
+}
+
+function SortHeader({ field, label, sortField, sortDir, onSort }) {
+  return (
+    <th onClick={() => onSort(field)} style={{ cursor: 'pointer', userSelect: 'none' }}>
+      {label} {sortField === field ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+    </th>
+  );
 }
 
 export default function TracksPanel({ apikey }) {
@@ -57,17 +71,14 @@ export default function TracksPanel({ apikey }) {
   }
 
   const sorted = [...tracks].sort((a, b) => {
-    const av = getValue(a, sortField);
-    const bv = getValue(b, sortField);
+    // rep stats are optional per the API spec — treat missing as smallest
+    const av = getValue(a, sortField) ?? -Infinity;
+    const bv = getValue(b, sortField) ?? -Infinity;
     const cmp = av < bv ? -1 : av > bv ? 1 : 0;
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
-  const SortHeader = ({ field, label }) => (
-    <th onClick={() => toggleSort(field)} style={{ cursor: 'pointer', userSelect: 'none' }}>
-      {label} {sortField === field ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-    </th>
-  );
+  const sortProps = { sortField, sortDir, onSort: toggleSort };
 
   return (
     <div className="panel">
@@ -85,13 +96,13 @@ export default function TracksPanel({ apikey }) {
               <table className="data-table tracks-table">
                 <thead>
                   <tr>
-                    <SortHeader field="trackid" label="ID" />
-                    <SortHeader field="start.time" label="Start" />
-                    <SortHeader field="stop.time" label="Stop" />
-                    <SortHeader field="rep.totdist" label="Dist (nm)" />
-                    <SortHeader field="rep.avespd" label="Avg Spd" />
-                    <SortHeader field="rep.maxspd" label="Max Spd" />
-                    <SortHeader field="rep.tottime" label="Duration" />
+                    <SortHeader field="trackid" label="ID" {...sortProps} />
+                    <SortHeader field="start.time" label="Start" {...sortProps} />
+                    <SortHeader field="stop.time" label="Stop" {...sortProps} />
+                    <SortHeader field="rep.totdist" label="Dist (nm)" {...sortProps} />
+                    <SortHeader field="rep.avespd" label="Avg Spd" {...sortProps} />
+                    <SortHeader field="rep.maxspd" label="Max Spd" {...sortProps} />
+                    <SortHeader field="rep.tottime" label="Duration" {...sortProps} />
                     <th>Map</th>
                   </tr>
                 </thead>
@@ -104,9 +115,9 @@ export default function TracksPanel({ apikey }) {
                       <td>{t.trackid}</td>
                       <td>{t.start.time}</td>
                       <td>{t.stop.time}</td>
-                      <td>{t.rep.totdist.toFixed(2)}</td>
-                      <td>{t.rep.avespd.toFixed(2)} kn</td>
-                      <td>{t.rep.maxspd.toFixed(2)} kn</td>
+                      <td>{fmtNum(t.rep.totdist, 2)}</td>
+                      <td>{fmtNum(t.rep.avespd, 2, ' kn')}</td>
+                      <td>{fmtNum(t.rep.maxspd, 2, ' kn')}</td>
                       <td>{formatDuration(t.rep.tottime)}</td>
                       <td>
                         <button className="btn-small" onClick={() => viewTrack(t)}>
@@ -125,9 +136,9 @@ export default function TracksPanel({ apikey }) {
                 {' — '}
                 {selectedTrack.start.time} → {selectedTrack.stop.time}
                 {' | '}
-                {selectedTrack.rep.totdist.toFixed(2)} nm
+                {fmtNum(selectedTrack.rep.totdist, 2, ' nm')}
                 {' | '}
-                Avg {selectedTrack.rep.avespd.toFixed(2)} kn / Max {selectedTrack.rep.maxspd.toFixed(2)} kn
+                Avg {fmtNum(selectedTrack.rep.avespd, 2, ' kn')} / Max {fmtNum(selectedTrack.rep.maxspd, 2, ' kn')}
               </div>
             )}
           </div>

@@ -33,6 +33,16 @@ function FitBounds({ points }) {
   return null;
 }
 
+// MapContainer's center prop is initial-only, so follow center changes manually
+function Recenter({ center }) {
+  const map = useMap();
+  const [lat, lon] = center;
+  useEffect(() => {
+    map.setView([lat, lon]);
+  }, [lat, lon, map]);
+  return null;
+}
+
 function speedColor(sog) {
   if (sog === undefined || sog === null) return '#3b82f6';
   if (sog < 2) return '#6b7280';
@@ -58,6 +68,8 @@ export default function MapView({ points, boatPos, center }) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      {center && !points?.length && <Recenter center={center} />}
 
       {points && points.length > 0 && (
         <>

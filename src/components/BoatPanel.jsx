@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sailboat, CloudSun } from 'lucide-react';
 import { getBoat } from '../services/api';
 import MapView from './MapView';
+import { fmt } from '../utils/format';
 
 function kelvinToCelsius(k) {
   return (k - 273.15).toFixed(1);
@@ -52,11 +53,11 @@ export default function BoatPanel({ apikey }) {
                     <tr><td>Position</td><td>{inst.lat.toFixed(5)}, {inst.lon.toFixed(5)}</td></tr>
                     <tr><td>SOG</td><td>{inst.sog} kn</td></tr>
                     <tr><td>COG</td><td>{inst.cog}°</td></tr>
-                    <tr><td>STW</td><td>{inst.stw} kn</td></tr>
-                    <tr><td>CRS</td><td>{inst.crs}°</td></tr>
-                    <tr><td>Wind Angle</td><td>{inst.wda}°</td></tr>
-                    <tr><td>Water Temp</td><td>{inst.watmp} °C</td></tr>
-                    <tr><td>Voltage</td><td>{inst.v} V</td></tr>
+                    <tr><td>STW</td><td>{fmt(inst.stw, ' kn')}</td></tr>
+                    <tr><td>CRS</td><td>{fmt(inst.crs, '°')}</td></tr>
+                    <tr><td>Wind Angle</td><td>{fmt(inst.wda, '°')}</td></tr>
+                    <tr><td>Water Temp</td><td>{fmt(inst.watmp, ' °C')}</td></tr>
+                    <tr><td>Voltage</td><td>{fmt(inst.v, ' V')}</td></tr>
                     <tr><td>UTC</td><td>{inst.utc}</td></tr>
                   </tbody>
                 </table>
@@ -66,22 +67,24 @@ export default function BoatPanel({ apikey }) {
                 <div className="card">
                   <h3><CloudSun size={16} strokeWidth={1.5} /> Weather</h3>
                   <div className="weather-main">
-                    <img
-                      src={`https://openweathermap.org/img/wn/${weather.weather.icon}@2x.png`}
-                      alt={weather.weather.description}
-                    />
+                    {weather.weather?.icon && (
+                      <img
+                        src={`https://openweathermap.org/img/wn/${weather.weather.icon}@2x.png`}
+                        alt={weather.weather?.description ?? ''}
+                      />
+                    )}
                     <div>
                       <div className="weather-temp">{kelvinToCelsius(weather.temp)} °C</div>
-                      <div className="weather-desc">{weather.weather.description}</div>
+                      <div className="weather-desc">{weather.weather?.description ?? '—'}</div>
                     </div>
                   </div>
                   <table className="data-table">
                     <tbody>
                       <tr><td>Wind Speed</td><td>{weather.wind_speed} m/s</td></tr>
                       <tr><td>Wind Dir</td><td>{weather.wind_deg}° ({windDirection(weather.wind_deg)})</td></tr>
-                      <tr><td>Clouds</td><td>{weather.clouds}%</td></tr>
-                      <tr><td>UV Index</td><td>{weather.uvi}</td></tr>
-                      <tr><td>At</td><td>{weather.reqtime}</td></tr>
+                      <tr><td>Clouds</td><td>{fmt(weather.clouds, '%')}</td></tr>
+                      <tr><td>UV Index</td><td>{fmt(weather.uvi)}</td></tr>
+                      <tr><td>At</td><td>{fmt(weather.reqtime)}</td></tr>
                     </tbody>
                   </table>
                 </div>

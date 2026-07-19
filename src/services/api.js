@@ -1,16 +1,20 @@
 const API_URL = 'https://app.sailserver.com/mod/api.php';
 
-async function post(apikey, cmd, trackid = '') {
+export async function callApi(apikey, cmd, trackid = '') {
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ apikey, cmd, trackid }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
+  return res.json();
+}
+
+const post = async (apikey, cmd, trackid = '') => {
+  const json = await callApi(apikey, cmd, trackid);
   if (json.statuscode !== 200) throw new Error(json.message || `API error ${json.statuscode}`);
   return json.data;
-}
+};
 
 export const getBoat = (apikey) => post(apikey, 'getboat');
 export const getTracks = (apikey) => post(apikey, 'gettracks');
