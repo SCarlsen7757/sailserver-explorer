@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { getTrack } from '../../services/api';
+import { useDataCache } from '../../context/dataCacheContext';
 import MapView from '../../components/MapView';
 
-export default function TrackPanel({ apikey, trackIds = [] }) {
-  const [trackid, setTrackid] = useState('');
-  const [points, setPoints] = useState(null);
+export default function TrackPanel({ apikey }) {
+  const { cache, setCached } = useDataCache();
+  const fetched = cache.gettrack ?? null;
+  const points = fetched?.points ?? null;
+  const [trackid, setTrackid] = useState(fetched?.trackid ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -13,10 +16,10 @@ export default function TrackPanel({ apikey, trackIds = [] }) {
     if (!trackid) return;
     setLoading(true);
     setError('');
-    setPoints(null);
+    setCached('gettrack', null);
     try {
       const data = await getTrack(apikey, trackid);
-      setPoints(data);
+      setCached('gettrack', { trackid, points: data });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -32,20 +35,13 @@ export default function TrackPanel({ apikey, trackIds = [] }) {
       <div className="panel-header">
         <h2><MapPin size={20} strokeWidth={1.75} /> Track Detail</h2>
         <div className="track-input-row">
-          {trackIds.length > 0 ? (
-            <select value={trackid} onChange={e => setTrackid(e.target.value)}>
-              <option value="">— select track —</option>
-              {trackIds.map(id => <option key={id} value={id}>{id}</option>)}
-            </select>
-          ) : (
-            <input
-              type="text"
-              placeholder="Enter Track ID"
-              value={trackid}
-              onChange={e => setTrackid(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && load()}
-            />
-          )}
+          <input
+            type="text"
+            placeholder="Enter Track ID"
+            value={trackid}
+            onChange={e => setTrackid(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && load()}
+          />
           <button onClick={load} disabled={loading || !trackid}>
             {loading ? 'Loading…' : 'Fetch'}
           </button>
@@ -58,7 +54,7 @@ export default function TrackPanel({ apikey, trackIds = [] }) {
           <div className="panel-data">
             <div className="info-grid">
               <div className="card">
-                <h3>Track #{trackid}</h3>
+                <h3>Track #{fetched?.trackid}</h3>
                 <table className="data-table">
                   <tbody>
                     <tr><td>Points</td><td>{points.length}</td></tr>
