@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { List } from 'lucide-react';
-import { getTracks } from '../../services/api';
+import { getTracks, getTrack } from '../../services/api';
+import { useDataCache } from '../../context/dataCacheContext';
 import MapView from '../../components/MapView';
-import { getTrack } from '../../services/api';
 
 function formatDuration(seconds) {
   if (seconds == null) return '—';
@@ -25,11 +25,11 @@ function SortHeader({ field, label, sortField, sortDir, onSort }) {
 }
 
 export default function TracksPanel({ apikey }) {
-  const [tracks, setTracks] = useState([]);
+  const { cache, setCached } = useDataCache();
+  const tracks = cache.gettracks ?? [];
+  const { track: selectedTrack = null, points: trackPoints = null } = cache['tracks-selection'] ?? {};
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [selectedTrack, setSelectedTrack] = useState(null);
-  const [trackPoints, setTrackPoints] = useState(null);
   const [trackLoading, setTrackLoading] = useState(false);
   const [sortField, setSortField] = useState('start.time');
   const [sortDir, setSortDir] = useState('desc');
@@ -39,7 +39,7 @@ export default function TracksPanel({ apikey }) {
     setError('');
     try {
       const data = await getTracks(apikey);
-      setTracks(data);
+      setCached('gettracks', data);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -48,12 +48,11 @@ export default function TracksPanel({ apikey }) {
   }
 
   async function viewTrack(track) {
-    setSelectedTrack(track);
-    setTrackPoints(null);
+    setCached('tracks-selection', { track, points: null });
     setTrackLoading(true);
     try {
       const points = await getTrack(apikey, track.trackid);
-      setTrackPoints(points);
+      setCached('tracks-selection', { track, points });
     } catch (e) {
       setError(e.message);
     } finally {

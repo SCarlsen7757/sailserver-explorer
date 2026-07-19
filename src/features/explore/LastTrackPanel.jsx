@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Clock } from 'lucide-react';
 import { getLastTrack } from '../../services/api';
+import { useDataCache } from '../../context/dataCacheContext';
 import MapView from '../../components/MapView';
 
 function formatDuration(start, stop) {
@@ -13,7 +14,8 @@ function formatDuration(start, stop) {
 }
 
 export default function LastTrackPanel({ apikey }) {
-  const [data, setData] = useState(null);
+  const { cache, setCached } = useDataCache();
+  const data = cache.getlasttrack ?? null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,7 +24,7 @@ export default function LastTrackPanel({ apikey }) {
     setError('');
     try {
       const d = await getLastTrack(apikey);
-      setData(d);
+      setCached('getlasttrack', d);
     } catch (e) {
       setError(e.message);
     } finally {

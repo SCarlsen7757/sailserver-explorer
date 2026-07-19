@@ -252,15 +252,23 @@ export default function DevPanel({ apikey }) {
         <div className="empty-state">Select a command and click Fetch to explore the API response</div>
       )}
 
-      {rawResponse && parsedData && (
+      {rawResponse && (
         <div className="dev-split">
-          {/* Left: Parsed view */}
+          {/* Left: Parsed view (raw pane still renders when the API returned an error) */}
           <div className="dev-pane">
             <div className="dev-pane-title">Parsed View</div>
-            {parsedData.cmd === 'getboat' && <BoatSummary data={parsedData.data} />}
-            {parsedData.cmd === 'gettracks' && <TracksSummary data={parsedData.data} />}
-            {parsedData.cmd === 'getlasttrack' && <LastTrackSummary data={parsedData.data} />}
-            {parsedData.cmd === 'gettrack' && <TrackSummary data={parsedData.data} trackid={trackid} />}
+            {parsedData ? (
+              <>
+                {parsedData.cmd === 'getboat' && <BoatSummary data={parsedData.data} />}
+                {parsedData.cmd === 'gettracks' && <TracksSummary data={parsedData.data} />}
+                {parsedData.cmd === 'getlasttrack' && <LastTrackSummary data={parsedData.data} />}
+                {parsedData.cmd === 'gettrack' && <TrackSummary data={parsedData.data} trackid={trackid} />}
+              </>
+            ) : (
+              <div className="dev-parsed">
+                <div className="dev-muted">The API returned an error — see the raw JSON for the full envelope.</div>
+              </div>
+            )}
           </div>
 
           {/* Right: Raw JSON */}
