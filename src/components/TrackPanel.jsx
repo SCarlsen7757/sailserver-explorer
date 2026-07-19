@@ -24,8 +24,8 @@ export default function TrackPanel({ apikey, trackIds = [] }) {
     }
   }
 
-  const maxSog = points ? Math.max(...points.map(p => p.sog)) : null;
-  const avgSog = points ? points.reduce((s, p) => s + p.sog, 0) / points.length : null;
+  const maxSog = points?.length ? Math.max(...points.map(p => p.sog)) : null;
+  const avgSog = points?.length ? points.reduce((s, p) => s + p.sog, 0) / points.length : null;
 
   return (
     <div className="panel">
@@ -62,10 +62,10 @@ export default function TrackPanel({ apikey, trackIds = [] }) {
                 <table className="data-table">
                   <tbody>
                     <tr><td>Points</td><td>{points.length}</td></tr>
-                    <tr><td>Start</td><td>{points[0]?.utc}</td></tr>
-                    <tr><td>End</td><td>{points[points.length - 1]?.utc}</td></tr>
-                    <tr><td>Max SOG</td><td>{maxSog?.toFixed(2)} kn</td></tr>
-                    <tr><td>Avg SOG</td><td>{avgSog?.toFixed(2)} kn</td></tr>
+                    <tr><td>Start</td><td>{points[0]?.utc ?? '—'}</td></tr>
+                    <tr><td>End</td><td>{points[points.length - 1]?.utc ?? '—'}</td></tr>
+                    <tr><td>Max SOG</td><td>{maxSog != null ? `${maxSog.toFixed(2)} kn` : '—'}</td></tr>
+                    <tr><td>Avg SOG</td><td>{avgSog != null ? `${avgSog.toFixed(2)} kn` : '—'}</td></tr>
                   </tbody>
                 </table>
               </div>

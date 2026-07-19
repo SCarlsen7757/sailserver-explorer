@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sailboat, List, Clock, MapPin, Wrench, CloudSun, Copy, Check } from 'lucide-react';
 import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
-import { getBoat, getTracks, getLastTrack, getTrack } from '../services/api';
+import { callApi } from '../services/api';
 
 const COMMANDS = [
   { cmd: 'getboat',      label: 'getboat — current boat & weather' },
@@ -15,15 +15,14 @@ function kelvinToCelsius(k) {
   return (k - 273.15).toFixed(1);
 }
 
-function formatDuration(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
 function windDir(deg) {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(deg / 45) % 8];
+}
+
+// Optional per the API spec — show a dash when the value is missing
+function fmt(value, unit = '') {
+  return value != null ? `${value}${unit}` : '—';
 }
 
 /* ── Parsed Summary views ── */
@@ -38,21 +37,21 @@ function BoatSummary({ data }) {
         <Field label="Position" value={`${inst.lat.toFixed(5)}, ${inst.lon.toFixed(5)}`} />
         <Field label="SOG" value={`${inst.sog} kn`} />
         <Field label="COG" value={`${inst.cog}°`} />
-        <Field label="STW" value={`${inst.stw} kn`} />
-        <Field label="CRS" value={`${inst.crs}°`} />
-        <Field label="Wind angle" value={`${inst.wda}°`} />
-        <Field label="Water temp" value={`${inst.watmp} °C`} />
-        <Field label="Voltage" value={`${inst.v} V`} />
+        <Field label="STW" value={fmt(inst.stw, ' kn')} />
+        <Field label="CRS" value={fmt(inst.crs, '°')} />
+        <Field label="Wind angle" value={fmt(inst.wda, '°')} />
+        <Field label="Water temp" value={fmt(inst.watmp, ' °C')} />
+        <Field label="Voltage" value={fmt(inst.v, ' V')} />
       </div>
       {weather && (
         <div className="dev-field-group">
           <div className="dev-group-title"><CloudSun size={14} strokeWidth={1.5} /> Weather</div>
           <Field label="Temp" value={`${kelvinToCelsius(weather.temp)} °C`} />
           <Field label="Wind" value={`${weather.wind_speed} m/s from ${weather.wind_deg}° (${windDir(weather.wind_deg)})`} />
-          <Field label="Clouds" value={`${weather.clouds}%`} />
-          <Field label="UV Index" value={weather.uvi} />
-          <Field label="Condition" value={weather.weather.description} />
-          <Field label="At" value={weather.reqtime} />
+          <Field label="Clouds" value={fmt(weather.clouds, '%')} />
+          <Field label="UV Index" value={fmt(weather.uvi)} />
+          <Field label="Condition" value={weather.weather?.description ?? '—'} />
+          <Field label="At" value={fmt(weather.reqtime)} />
         </div>
       )}
     </div>
@@ -70,9 +69,9 @@ function TracksSummary({ data }) {
             <span className="dev-track-info">
               {t.start.time} → {t.stop.time}
             </span>
-            <span className="dev-track-stat">{t.rep.totdist.toFixed(2)} nm</span>
-            <span className="dev-track-stat">avg {t.rep.avespd.toFixed(1)} kn</span>
-            <span className="dev-track-stat">max {t.rep.maxspd.toFixed(1)} kn</span>
+            <span className="dev-track-stat">{t.rep.totdist != null ? `${t.rep.totdist.toFixed(2)} nm` : '—'}</span>
+            <span className="dev-track-stat">avg {t.rep.avespd != null ? `${t.rep.avespd.toFixed(1)} kn` : '—'}</span>
+            <span className="dev-track-stat">max {t.rep.maxspd != null ? `${t.rep.maxspd.toFixed(1)} kn` : '—'}</span>
           </div>
         ))}
         {data.length > 10 && (
@@ -193,15 +192,9 @@ export default function DevPanel({ apikey }) {
     setRawResponse(null);
     setParsedData(null);
     try {
-      let data;
-      if (cmd === 'getboat') data = await getBoat(apikey);
-      else if (cmd === 'gettracks') data = await getTracks(apikey);
-      else if (cmd === 'getlasttrack') data = await getLastTrack(apikey);
-      else if (cmd === 'gettrack') data = await getTrack(apikey, trackid);
-
-      setParsedData({ cmd, data });
-      // Build full raw envelope for display
-      setRawResponse({ statuscode: 200, cmd, message: '', data });
+      const json = await callApi(apikey, cmd, cmd === 'gettrack' ? String(trackid) : '');
+      setParsedData({ cmd, data: json.data });
+      setRawResponse(json);
     } catch (e) {
       setError(e.message);
     } finally {
