@@ -3,6 +3,7 @@ import { Sailboat, List, Clock, MapPin, Wrench, CloudSun, Copy, Check } from 'lu
 import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import { callApi } from '../services/api';
+import { fmt } from '../utils/format';
 
 const COMMANDS = [
   { cmd: 'getboat',      label: 'getboat — current boat & weather' },
@@ -18,11 +19,6 @@ function kelvinToCelsius(k) {
 function windDir(deg) {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(deg / 45) % 8];
-}
-
-// Optional per the API spec — show a dash when the value is missing
-function fmt(value, unit = '') {
-  return value != null ? `${value}${unit}` : '—';
 }
 
 /* ── Parsed Summary views ── */
@@ -193,8 +189,13 @@ export default function DevPanel({ apikey }) {
     setParsedData(null);
     try {
       const json = await callApi(apikey, cmd, cmd === 'gettrack' ? String(trackid) : '');
-      setParsedData({ cmd, data: json.data });
+      // Show the raw envelope even for API errors — that's the point of this panel
       setRawResponse(json);
+      if (json.statuscode === 200) {
+        setParsedData({ cmd, data: json.data });
+      } else {
+        setError(json.message || `API error ${json.statuscode}`);
+      }
     } catch (e) {
       setError(e.message);
     } finally {

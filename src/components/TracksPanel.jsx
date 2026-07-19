@@ -71,8 +71,9 @@ export default function TracksPanel({ apikey }) {
   }
 
   const sorted = [...tracks].sort((a, b) => {
-    const av = getValue(a, sortField);
-    const bv = getValue(b, sortField);
+    // rep stats are optional per the API spec — treat missing as smallest
+    const av = getValue(a, sortField) ?? -Infinity;
+    const bv = getValue(b, sortField) ?? -Infinity;
     const cmp = av < bv ? -1 : av > bv ? 1 : 0;
     return sortDir === 'asc' ? cmp : -cmp;
   });

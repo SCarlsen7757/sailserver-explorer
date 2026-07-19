@@ -7,12 +7,14 @@ export async function callApi(apikey, cmd, trackid = '') {
     body: JSON.stringify({ apikey, cmd, trackid }),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  if (json.statuscode !== 200) throw new Error(json.message || `API error ${json.statuscode}`);
-  return json;
+  return res.json();
 }
 
-const post = async (apikey, cmd, trackid = '') => (await callApi(apikey, cmd, trackid)).data;
+const post = async (apikey, cmd, trackid = '') => {
+  const json = await callApi(apikey, cmd, trackid);
+  if (json.statuscode !== 200) throw new Error(json.message || `API error ${json.statuscode}`);
+  return json.data;
+};
 
 export const getBoat = (apikey) => post(apikey, 'getboat');
 export const getTracks = (apikey) => post(apikey, 'gettracks');

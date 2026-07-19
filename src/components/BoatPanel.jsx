@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sailboat, CloudSun } from 'lucide-react';
 import { getBoat } from '../services/api';
 import MapView from './MapView';
+import { fmt } from '../utils/format';
 
 function kelvinToCelsius(k) {
   return (k - 273.15).toFixed(1);
@@ -10,11 +11,6 @@ function kelvinToCelsius(k) {
 function windDirection(deg) {
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   return dirs[Math.round(deg / 45) % 8];
-}
-
-// Optional per the API spec — show a dash when the boat doesn't report the value
-function fmt(value, unit = '') {
-  return value != null ? `${value}${unit}` : '—';
 }
 
 export default function BoatPanel({ apikey }) {
@@ -79,7 +75,7 @@ export default function BoatPanel({ apikey }) {
                     )}
                     <div>
                       <div className="weather-temp">{kelvinToCelsius(weather.temp)} °C</div>
-                      <div className="weather-desc">{weather.weather?.description ?? ''}</div>
+                      <div className="weather-desc">{weather.weather?.description ?? '—'}</div>
                     </div>
                   </div>
                   <table className="data-table">
