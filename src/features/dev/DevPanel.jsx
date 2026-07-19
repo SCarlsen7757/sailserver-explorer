@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Sailboat, List, Clock, MapPin, Wrench, CloudSun, Copy, Check } from 'lucide-react';
 import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
-import { callApi } from '../services/api';
-import { fmt } from '../utils/format';
+import { callApi } from '../../services/api';
+import { fmt } from '../../utils/format';
 
 const COMMANDS = [
   { cmd: 'getboat',      label: 'getboat — current boat & weather' },

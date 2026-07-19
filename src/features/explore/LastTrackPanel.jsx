@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Clock } from 'lucide-react';
-import { getLastTrack } from '../services/api';
-import MapView from './MapView';
+import { getLastTrack } from '../../services/api';
+import MapView from '../../components/MapView';
 
 function formatDuration(start, stop) {
   const s = new Date(start.replace(' ', 'T'));

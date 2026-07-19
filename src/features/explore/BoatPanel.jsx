@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Sailboat, CloudSun } from 'lucide-react';
-import { getBoat } from '../services/api';
-import MapView from './MapView';
-import { fmt } from '../utils/format';
+import { getBoat } from '../../services/api';
+import MapView from '../../components/MapView';
+import { fmt } from '../../utils/format';
 
 function kelvinToCelsius(k) {
   return (k - 273.15).toFixed(1);
