@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { List } from 'lucide-react';
-import { getTracks } from '../services/api';
-import MapView from './MapView';
-import { getTrack } from '../services/api';
+import { getTracks } from '../../services/api';
+import MapView from '../../components/MapView';
+import { getTrack } from '../../services/api';
 
 function formatDuration(seconds) {
   if (seconds == null) return '—';

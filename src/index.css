@@ -60,12 +60,28 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 [data-theme="dev"] .btn-secondary:hover:not(:disabled) { background: #30363d; }
 .btn-small { padding: 3px 10px; font-size: 12px; }
 
-.tab-nav { display: flex; gap: 2px; padding: 8px 16px 0; background: var(--nav-bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.tab-btn { background: none; color: var(--text-muted); border: 1px solid transparent; border-bottom: none; border-radius: var(--tab-radius) var(--tab-radius) 0 0; padding: 7px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
-.tab-btn:hover { background: var(--surface-hover); color: var(--text); }
-.tab-btn.active { background: var(--surface); color: var(--text); border-color: var(--border); font-weight: 600; }
+/* ── Side Nav ── */
+.app-body { display: flex; flex: 1; min-height: 0; }
+.app-content { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+.side-nav { width: 210px; flex-shrink: 0; background: var(--nav-bg); border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-group-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 10px 4px; }
+.nav-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--tab-radius); border: 1px solid transparent; color: var(--text-muted); font-size: 13px; text-decoration: none; transition: all 0.15s; }
+.nav-link svg { flex-shrink: 0; }
+.nav-link:hover { background: var(--surface-hover); color: var(--text); }
+.nav-link.active { background: var(--surface); color: var(--text); border-color: var(--border); font-weight: 600; box-shadow: var(--shadow); }
+.nav-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cmd-badge { font-size: 10px; background: var(--border); color: var(--text-muted); padding: 1px 5px; border-radius: 4px; font-family: monospace; }
-.tab-btn.active .cmd-badge { background: var(--primary); color: white; }
+.nav-link.active .cmd-badge { background: var(--primary); color: white; }
+
+/* Narrow windows: collapse to an icons-only rail (link title attributes provide tooltips) */
+@media (max-width: 900px) {
+  .side-nav { width: 52px; padding: 14px 8px; }
+  .nav-label, .cmd-badge { display: none; }
+  .nav-group-label { visibility: hidden; height: 1px; padding: 0; border-top: 1px solid var(--border); margin: 0 6px 6px; }
+  .nav-link { justify-content: center; padding: 8px; }
+}
 
 .app-main { flex: 1; overflow: hidden; padding: 16px; min-height: 0; }
 .key-warning { padding: 12px 20px; background: #fef9c3; border-bottom: 1px solid #fde68a; color: #92400e; font-size: 13px; flex-shrink: 0; }
@@ -91,6 +107,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   .panel-map { flex: 0 0 60%; order: 1; }
   .panel-data { flex: 1; order: 2; overflow-y: auto; }
   .panel-map .map-container { height: 100%; }
+  /* Let the tracks table fill the data column instead of stopping at 300px */
+  .panel-data .table-scroll { flex: 1; max-height: none; min-height: 0; }
+  /* Stack info cards vertically in the narrow data column instead of squeezing them side by side */
+  .panel-data .info-grid { grid-template-columns: 1fr; }
 }
 
 .panel-content { display: flex; flex-direction: column; gap: 16px; }
@@ -339,3 +359,16 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .dev-json-tree > div {
   background: transparent !important;
 }
+
+/* ── Export Panel ── */
+.export-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; max-width: 640px; }
+.export-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.export-form button { display: flex; align-items: center; gap: 6px; }
+.export-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.export-field input[type="date"] { padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; background: var(--surface); color: var(--text); font-family: inherit; }
+.export-hint { margin-top: 10px; font-size: 12px; color: var(--error); }
+.export-progress { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-muted); }
+.export-progress progress { flex: 0 0 240px; height: 8px; accent-color: var(--primary); }
+.export-result { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #16a34a; }
+.export-result svg { flex-shrink: 0; }
+.export-result code { background: var(--nav-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12px; color: var(--text); }

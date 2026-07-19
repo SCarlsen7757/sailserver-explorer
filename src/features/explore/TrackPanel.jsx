@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MapPin } from 'lucide-react';
-import { getTrack } from '../services/api';
-import MapView from './MapView';
+import { getTrack } from '../../services/api';
+import MapView from '../../components/MapView';
 
 export default function TrackPanel({ apikey, trackIds = [] }) {
   const [trackid, setTrackid] = useState('');
